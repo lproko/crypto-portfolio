@@ -1,103 +1,256 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { CoinSearch } from "@/components/coins/CoinSearch";
+import { CoinDetails } from "@/components/coins/CoinDetails";
+import { PortfolioDashboard } from "@/components/portfolio/PortfolioDashboard";
+import { CoinBrowser } from "@/components/coins/CoinBrowser";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { DemoModeBanner } from "@/components/DemoModeBanner";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { User, Settings, LogOut, ChevronDown, Menu, X } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [selectedCoinId, setSelectedCoinId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    "portfolio" | "market" | "browser"
+  >("portfolio");
+  const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleCoinSelect = (coinId: string) => {
+    setSelectedCoinId(coinId);
+    setActiveTab("market");
+  };
+
+  // Close avatar menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        avatarMenuRef.current &&
+        !avatarMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAvatarMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleTabChange = (tab: "portfolio" | "market" | "browser") => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+  };
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        {/* Header Navigation */}
+        <header className="border-b border-border bg-card">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4 md:space-x-8">
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">
+                  Cryptory
+                </h1>
+
+                {/* Desktop Navigation */}
+                <nav className="hidden md:flex space-x-6">
+                  <button
+                    onClick={() => handleTabChange("portfolio")}
+                    className={`text-sm font-medium transition-colors ${
+                      activeTab === "portfolio"
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Portfolio
+                  </button>
+                  <button
+                    onClick={() => handleTabChange("market")}
+                    className={`text-sm font-medium transition-colors ${
+                      activeTab === "market"
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Market
+                  </button>
+                  <button
+                    onClick={() => handleTabChange("browser")}
+                    className={`text-sm font-medium transition-colors ${
+                      activeTab === "browser"
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Browse All
+                  </button>
+                </nav>
+              </div>
+
+              <div className="flex items-center space-x-2 md:space-x-4">
+                {/* Language and Currency - Hidden on mobile */}
+                <div className="hidden sm:flex items-center space-x-2">
+                  <select className="bg-background border border-border rounded px-2 py-1 text-xs">
+                    <option>ENG</option>
+                  </select>
+                  <select className="bg-background border border-border rounded px-2 py-1 text-xs">
+                    <option>USD</option>
+                  </select>
+                </div>
+
+                {/* Mobile Menu Button */}
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+                >
+                  {isMobileMenuOpen ? (
+                    <X className="w-5 h-5 text-foreground" />
+                  ) : (
+                    <Menu className="w-5 h-5 text-foreground" />
+                  )}
+                </button>
+
+                {/* Avatar Menu */}
+                <div className="relative" ref={avatarMenuRef}>
+                  <button
+                    onClick={() => setIsAvatarMenuOpen(!isAvatarMenuOpen)}
+                    className="flex items-center space-x-1 md:space-x-2 p-1 md:p-2 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <div className="w-6 h-6 md:w-8 md:h-8 bg-primary rounded-full flex items-center justify-center">
+                      <User className="w-3 h-3 md:w-4 md:h-4 text-primary-foreground" />
+                    </div>
+                    <ChevronDown className="w-3 h-3 md:w-4 md:h-4 text-muted-foreground hidden sm:block" />
+                  </button>
+
+                  {isAvatarMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50">
+                      <div className="p-3 border-b border-border">
+                        <div className="text-sm font-medium text-foreground">
+                          {user?.name || "User"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {user?.email || "user@example.com"}
+                        </div>
+                      </div>
+                      <div className="py-1">
+                        <button className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted flex items-center space-x-2">
+                          <User className="w-4 h-4" />
+                          <span>Profile</span>
+                        </button>
+                        <button className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted flex items-center space-x-2">
+                          <Settings className="w-4 h-4" />
+                          <span>Settings</span>
+                        </button>
+                        <button
+                          onClick={logout}
+                          className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted flex items-center space-x-2"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Navigation Menu */}
+            {isMobileMenuOpen && (
+              <div className="md:hidden mt-4 pb-4 border-t border-border">
+                <nav className="flex flex-col space-y-2 pt-4">
+                  <button
+                    onClick={() => handleTabChange("portfolio")}
+                    className={`text-left px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      activeTab === "portfolio"
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Portfolio
+                  </button>
+                  <button
+                    onClick={() => handleTabChange("market")}
+                    className={`text-left px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      activeTab === "market"
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Market
+                  </button>
+                  <button
+                    onClick={() => handleTabChange("browser")}
+                    className={`text-left px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      activeTab === "browser"
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    Browse All
+                  </button>
+                </nav>
+
+                {/* Mobile Language and Currency */}
+                <div className="flex items-center space-x-2 pt-4 border-t border-border mt-4">
+                  <select className="bg-background border border-border rounded px-3 py-2 text-sm flex-1">
+                    <option>English (ENG)</option>
+                  </select>
+                  <select className="bg-background border border-border rounded px-3 py-2 text-sm flex-1">
+                    <option>USD ($)</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <DemoModeBanner />
+            <ErrorBoundary>
+              <CoinSearch onCoinSelect={handleCoinSelect} />
+            </ErrorBoundary>
+          </div>
+
+          {/* Tab Content */}
+          <ErrorBoundary>
+            {activeTab === "portfolio" && <PortfolioDashboard />}
+          </ErrorBoundary>
+
+          <ErrorBoundary>
+            {activeTab === "market" &&
+              (selectedCoinId ? (
+                <CoinDetails coinId={selectedCoinId} />
+              ) : (
+                <Card className="max-w-2xl mx-auto">
+                  <CardHeader>
+                    <CardTitle>Market Explorer</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600 mb-4">
+                      Search for a cryptocurrency above to view detailed
+                      information and add it to your portfolio.
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+          </ErrorBoundary>
+
+          <ErrorBoundary>
+            {activeTab === "browser" && <CoinBrowser />}
+          </ErrorBoundary>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
